@@ -46,7 +46,7 @@ import {
   BarChart3
 } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = 'https://sach-backend-13pu.onrender.com';
 const AUTH_TOKEN_KEY = 'sach_access_token';
 
 const openAuthenticatedWebSocket = url => {
