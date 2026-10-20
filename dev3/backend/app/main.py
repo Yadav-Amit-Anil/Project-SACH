@@ -20,6 +20,14 @@ import urllib.request
 
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import create_engine, String, Integer, Float, Text, ForeignKey, UniqueConstraint, select, and_, or_, inspect, text, func, update
 from sqlalchemy.exc import IntegrityError
