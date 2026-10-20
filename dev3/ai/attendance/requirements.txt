@@ -1,0 +1,11 @@
+opencv-python==4.11.0.86
+numpy==2.5.3
+ultralytics==8.4.171
+insightface==2.0
+onnxruntime==1.30.0
+onnx==1.23.1
+torch==2.14.1
+torchvision==0.29.1
+lap==0.5.13
+requests>=2.31
+websockets>=12,<16
