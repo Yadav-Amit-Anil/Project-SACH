@@ -20,13 +20,7 @@ import urllib.request
 app = FastAPI()
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import create_engine, String, Integer, Float, Text, ForeignKey, UniqueConstraint, select, and_, or_, inspect, text, func, update
@@ -202,6 +196,14 @@ class AttendanceUnlockRequest(Base):
 app = FastAPI(
     title="MSDE PS 245 - SACH (Smart Attendance & Compliance Hub)",
     version="1.0.0",
+)  
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Direct Drive Download URLs (Native Python urllib)
