@@ -17,7 +17,7 @@ import subprocess
 import os
 import urllib.request 
 
-
+app = FastAPI()
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
