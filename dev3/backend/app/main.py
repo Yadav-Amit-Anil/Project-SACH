@@ -14,7 +14,7 @@ import secrets
 import statistics
 import subprocess
 import os
-import gdown
+import urllib.request 
 
 
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
@@ -195,17 +195,17 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Auto-download YOLO models from Google Drive if missing
+# Direct Drive Download URLs (Native Python urllib)
 MODELS = {
-    "yolo11n.pt": "1F3IVNhVp5mfg-uBVQWbZxEEtcbgXUhsa",
-    "yolov8n.pt": "1hGzgwlMIxY0-GBG4TUFoBmbCwmTmYUbk",
+    "yolo11n.pt": "https://drive.google.com/uc?export=download&id=1F3IVNhVp5mfg-uBVQWbZxEEtcbgXUhsa",
+    "yolov8n.pt": "https://drive.google.com/uc?export=download&id=1hGzgwlMIxY0-GBG4TUFoBmbCwmTmYUbk",
 }
 
-for model_name, drive_id in MODELS.items():
+for model_name, download_url in MODELS.items():
     if not os.path.exists(model_name):
-        print(f"Downloading {model_name} from Google Drive...")
-        url = f"https://drive.google.com/uc?id={drive_id}"
-        gdown.download(url, model_name, quiet=False)
+        print(f"Downloading {model_name}...")
+        urllib.request.urlretrieve(download_url, model_name)
+        print(f"{model_name} downloaded successfully!")
 
 app.add_middleware(
     CORSMiddleware,
