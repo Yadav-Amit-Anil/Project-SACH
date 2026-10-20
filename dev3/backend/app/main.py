@@ -17,7 +17,7 @@ import subprocess
 import os
 import urllib.request 
 
-app = FastAPI()
+
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -198,13 +198,7 @@ app = FastAPI(
     version="1.0.0",
 )  
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # Direct Drive Download URLs (Native Python urllib)
 MODELS = {
@@ -220,15 +214,8 @@ for model_name, download_url in MODELS.items():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        origin.strip()
-        for origin in os.getenv(
-            "SACH_ALLOWED_ORIGINS",
-            "http://localhost:5173,http://127.0.0.1:5173",
-        ).split(",")
-        if origin.strip()
-    ],
-    allow_credentials=False,
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
