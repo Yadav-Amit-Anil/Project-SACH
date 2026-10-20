@@ -13,6 +13,9 @@ import re
 import secrets
 import statistics
 import subprocess
+import os
+import gdown
+
 
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -191,6 +194,18 @@ app = FastAPI(
     title="MSDE PS 245 - SACH (Smart Attendance & Compliance Hub)",
     version="1.0.0",
 )
+
+# Auto-download YOLO models from Google Drive if missing
+MODELS = {
+    "yolo11n.pt": "1F3IVNhVp5mfg-uBVQWbZxEEtcbgXUhsa",
+    "yolov8n.pt": "1hGzgwlMIxY0-GBG4TUFoBmbCwmTmYUbk",
+}
+
+for model_name, drive_id in MODELS.items():
+    if not os.path.exists(model_name):
+        print(f"Downloading {model_name} from Google Drive...")
+        url = f"https://drive.google.com/uc?id={drive_id}"
+        gdown.download(url, model_name, quiet=False)
 
 app.add_middleware(
     CORSMiddleware,
