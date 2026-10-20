@@ -443,6 +443,70 @@ class ApiBehaviorTests(unittest.TestCase):
             )
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_first_admin_bootstrap_is_local_one_time_and_allows_login(self):
+        client = TestClient(sach.app)
+        credentials = {
+            "username": "first-admin",
+            "password": "a-private-password-long-enough",
+        }
+
+        with patch.object(sach, "SessionLocal", self.session_factory):
+            status = client.get("/api/auth/bootstrap-status")
+            self.assertEqual(status.status_code, 200)
+            self.assertFalse(status.json()["admin_configured"])
+
+            remote_client = TestClient(
+                sach.app,
+                client=("192.0.2.10", 12345),
+            )
+            remote_setup = remote_client.post(
+                "/api/auth/bootstrap", json=credentials
+            )
+            self.assertEqual(remote_setup.status_code, 403)
+
+            setup = client.post("/api/auth/bootstrap", json=credentials)
+            self.assertEqual(setup.status_code, 200)
+            self.assertEqual(
+                self.db.scalar(
+                    select(sach.AuthUser.role).where(
+                        sach.AuthUser.username == credentials["username"]
+                    )
+                ),
+                "ADMIN",
+            )
+
+            status = client.get("/api/auth/bootstrap-status")
+            self.assertTrue(status.json()["admin_configured"])
+            repeated_setup = client.post(
+                "/api/auth/bootstrap",
+                json={
+                    "username": "second-admin",
+                    "password": "another-private-password",
+                },
+            )
+            self.assertEqual(repeated_setup.status_code, 409)
+
+            login = client.post("/api/auth/login", json=credentials)
+            self.assertEqual(login.status_code, 200)
+            self.assertEqual(login.json()["user"]["role"], "ADMIN")
+
+    def test_first_admin_bootstrap_requires_strong_password(self):
+        client = TestClient(sach.app)
+        with patch.object(sach, "SessionLocal", self.session_factory):
+            response = client.post(
+                "/api/auth/bootstrap",
+                json={"username": "first-admin", "password": "short"},
+            )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertIsNone(
+            self.db.scalar(
+                select(sach.AuthUser.id).where(
+                    sach.AuthUser.username == "first-admin"
+                )
+            )
+        )
+
         response = sach.log_attendance(
             sach.AttendanceLog(
                 centre_id="TEST_001",

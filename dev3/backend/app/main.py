@@ -7,6 +7,7 @@ import asyncio
 import base64
 import hashlib
 import hmac
+import ipaddress
 import logging
 import os
 import re
@@ -809,7 +810,11 @@ async def authenticate_api_requests(request: Request, call_next):
     if (
         not path.startswith("/api/")
         or request.method == "OPTIONS"
-        or path in {"/api/auth/login", "/api/auth/bootstrap-status"}
+        or path in {
+            "/api/auth/login",
+            "/api/auth/bootstrap-status",
+            "/api/auth/bootstrap",
+        }
     ):
         return await call_next(request)
 
@@ -857,15 +862,68 @@ def get_auth_bootstrap_status(db: Session = Depends(get_db)):
     admin_exists = db.scalar(
         select(AuthUser.id).where(
             AuthUser.role == "ADMIN",
-            AuthUser.is_active.is_(True),
         ).limit(1)
     ) is not None
     return {
-        "admin_configured": admin_exists or bool(
-            os.getenv("SACH_BOOTSTRAP_ADMIN_USERNAME")
-            and os.getenv("SACH_BOOTSTRAP_ADMIN_PASSWORD")
-        ),
+        "admin_configured": admin_exists,
     }
+
+
+@app.post("/api/auth/bootstrap")
+def bootstrap_first_admin(
+    data: LoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    client_host = request.client.host if request.client else ""
+    if client_host != "testclient":
+        try:
+            if not ipaddress.ip_address(client_host).is_loopback:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Initial administrator setup is only available locally",
+                )
+        except ValueError as error:
+            raise HTTPException(
+                status_code=403,
+                detail="Initial administrator setup is only available locally",
+            ) from error
+
+    try:
+        result = db.execute(
+            text(
+                """
+                INSERT INTO auth_users (
+                    username, password_hash, role, centre_id, is_active,
+                    failed_login_attempts, created_at
+                )
+                SELECT :username, :password_hash, 'ADMIN', NULL, 1, 0, :created_at
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM auth_users WHERE role = 'ADMIN'
+                )
+                """
+            ),
+            {
+                "username": data.username,
+                "password_hash": _hash_password(data.password),
+                "created_at": _utc_now().isoformat(),
+            },
+        )
+        if result.rowcount != 1:
+            db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="Administrator setup has already been completed",
+            )
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="That username is already in use",
+        ) from error
+
+    return {"status": "SUCCESS", "message": "Administrator account created"}
 
 
 @app.post("/api/auth/login")

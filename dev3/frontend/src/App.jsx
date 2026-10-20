@@ -46,7 +46,8 @@ import {
   BarChart3
 } from 'lucide-react';
 
-const API_BASE = 'https://sach-backend-13pu.onrender.com';
+const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE = `${API_ORIGIN.replace(/\/+$/, '').replace(/\/api$/i, '')}/api`;
 const AUTH_TOKEN_KEY = 'sach_access_token';
 
 const openAuthenticatedWebSocket = url => {
@@ -107,8 +108,12 @@ function LoginPage({ onLogin }) {
 
   useEffect(() => {
     axios.get(`${API_BASE}/auth/bootstrap-status`)
-      .then(({ data }) => setBootstrapConfigured(data.admin_configured))
-      .catch(() => setBootstrapConfigured(false));
+      .then(({ data }) => {
+        setBootstrapConfigured(data.admin_configured);
+      })
+      .catch(() => {
+        setBootstrapConfigured(null);
+      });
   }, []);
 
   const submit = async event => {
@@ -116,6 +121,9 @@ function LoginPage({ onLogin }) {
     setSubmitting(true);
     setErrorMessage('');
     try {
+      if (bootstrapConfigured === false) {
+        await axios.post(`${API_BASE}/auth/bootstrap`, { username, password });
+      }
       await onLogin({ username, password });
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error, 'Sign-in failed.'));
@@ -144,13 +152,19 @@ function LoginPage({ onLogin }) {
         }}
       >
         <div style={{ color: '#1e3a8a', fontSize: '12px', fontWeight: 800 }}>
-          SACH · SECURE SIGN IN
+          {bootstrapConfigured === false
+            ? 'SACH · FIRST-TIME SETUP'
+            : 'SACH · SECURE SIGN IN'}
         </div>
         <h1 style={{ margin: '10px 0 6px', color: '#0f172a', fontSize: '25px' }}>
-          Sign in to the Control Tower
+          {bootstrapConfigured === false
+            ? 'Create the administrator account'
+            : 'Sign in to the Control Tower'}
         </h1>
         <p style={{ margin: '0 0 24px', color: '#64748b', fontSize: '14px' }}>
-          Use your assigned account. Access is limited by your role.
+          {bootstrapConfigured === false
+            ? 'Choose a username and a private password of at least 12 characters. This local setup is available once.'
+            : 'Use your assigned account. Access is limited by your role.'}
         </p>
         <label style={{ display: 'block', marginBottom: '14px', color: '#334155', fontSize: '13px' }}>
           Username
@@ -168,7 +182,7 @@ function LoginPage({ onLogin }) {
           Password
           <input
             type="password"
-            autoComplete="current-password"
+            autoComplete={bootstrapConfigured === false ? 'new-password' : 'current-password'}
             required
             minLength={12}
             maxLength={128}
@@ -182,17 +196,19 @@ function LoginPage({ onLogin }) {
         )}
         {bootstrapConfigured === false && (
           <p role="alert" style={styles.warningStrip}>
-            Administrator setup is incomplete. Configure
-            {' '}SACH_BOOTSTRAP_ADMIN_USERNAME and
-            {' '}SACH_BOOTSTRAP_ADMIN_PASSWORD for the backend, then restart it.
+            No administrator account exists. Creating one is limited to this computer and can only be done once.
           </p>
         )}
         <button
           type="submit"
-          disabled={submitting || bootstrapConfigured === false}
+          disabled={submitting}
           style={{ ...styles.primaryButton, width: '100%', justifyContent: 'center' }}
         >
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting
+            ? bootstrapConfigured === false ? 'Creating account…' : 'Signing in…'
+            : bootstrapConfigured === false
+              ? 'Create administrator and sign in'
+              : 'Sign in'}
         </button>
       </form>
     </main>

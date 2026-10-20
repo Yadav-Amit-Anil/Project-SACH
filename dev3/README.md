@@ -87,7 +87,7 @@ python -m pip install -r backend/requirements.txt
 
 On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1`.
 
-On a new database, the backend seeds sample centre records. It does not seed course batches or learner rosters. Configure the first Admin account through environment variables; choose a password of at least 12 characters and keep it private:
+On a new database, the backend seeds sample centre records. It does not seed course batches or learner rosters. To provision the first Admin, either use the local first-time setup form in the app (available once, from localhost only) or configure credentials before backend startup. Choose a password of at least 12 characters and keep it private:
 
 ```bash
 export SACH_BOOTSTRAP_ADMIN_USERNAME="sach-admin"
@@ -138,7 +138,7 @@ npm ci
 npm run dev
 ```
 
-Open the local Vite URL printed in the terminal (normally [http://127.0.0.1:5173](http://127.0.0.1:5173)). The current client expects the API at `http://127.0.0.1:8000/api`.
+Open the local Vite URL printed in the terminal (normally [http://127.0.0.1:5173](http://127.0.0.1:5173)). By default, the client uses the local API at `http://127.0.0.1:8000/api`. For a different backend, set `VITE_API_BASE_URL` to its origin (with or without the `/api` suffix) before starting Vite or building the frontend.
 
 ### 4. Configure the first centre workflow
 
