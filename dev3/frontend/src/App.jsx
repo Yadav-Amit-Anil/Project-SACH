@@ -46,7 +46,7 @@ import {
   BarChart3
 } from 'lucide-react';
 
-const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || "https://sach-backend.onrender.com";
+const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || "https://sach-backend-13pu.onrender.com";
 const API_BASE = `${API_ORIGIN.replace(/\/+$/, '').replace(/\/api$/i, '')}/api`;
 const AUTH_TOKEN_KEY = 'sach_access_token';
 
